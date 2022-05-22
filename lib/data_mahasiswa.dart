@@ -14,11 +14,22 @@ class _DataMahasiswaState extends State<DataMahasiswa> {
   final CollectionReference mahasiswa =
       FirebaseFirestore.instance.collection('mahasiswa');
   //Menyiapkan TextEditingController agar data dari textformfield dapat digunakan.
-  final TextEditingController _npmController = TextEditingController();
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _kelasController = TextEditingController();
+  final TextEditingController _npmController = TextEditingController(text: 'initial Value');
+  final TextEditingController _namaController = TextEditingController(text: 'initial Value');
+  final TextEditingController _kelasController = TextEditingController(text: 'initial Value');
   //Menyiapkan Key untuk form
   final _formKey = GlobalKey<FormState>();
+
+  //Inisialisasi state untuk masing-masing controller sehingga data dari database dapat ditampilkan pada TextFormField
+  @override
+  void initState() {
+    mahasiswa.doc(widget.id).snapshots().listen((DocumentSnapshot<Object?> snapshot) {
+      _npmController.text = snapshot.get('npm').toString();
+      _namaController.text = snapshot.get('nama').toString();
+      _kelasController.text = snapshot.get('kelas').toString();
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,33 +42,8 @@ class _DataMahasiswaState extends State<DataMahasiswa> {
           margin: EdgeInsets.symmetric(
               horizontal: MediaQuery.of(context).size.width * 00.06,
               vertical: MediaQuery.of(context).size.height * 00.03),
-          child: getMahasiswa(),
+          child: dataMahasiswa(context),
         ));
-  }
-
-  //Mengambil data dari database menggunakan FutureBuilder sehingga tampilan data tidak akan langsung berubah saat data pada di database diperbarui
-  FutureBuilder<DocumentSnapshot<Object?>> getMahasiswa() {
-    return FutureBuilder(
-      //Mengambil data daru document berdasarkan id yang diperoleh pada halaman home lalu disimpan dalam snapshot
-      future: mahasiswa.doc(widget.id).get(),
-      builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        //Dilakukan try and catch
-        try {
-          //Bila snapshot memiliki data maka kita isikan data tersebut ke dalam masing-masing controller
-          if (snapshot.hasData) {
-            _npmController.text = snapshot.data!['npm'].toString();
-            _namaController.text = snapshot.data!['nama'].toString();
-            _kelasController.text = snapshot.data!['kelas'].toString();
-            //Build widget dataMahasiswa.
-            return dataMahasiswa(context);
-          }
-        } catch (e) {
-          debugPrint(e.toString());
-        }
-        //Kembalikan tampilan loading jika terjadi sesuatu di luar dugaan.
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
   }
 
   Widget dataMahasiswa(BuildContext context) {
